@@ -1,0 +1,75 @@
+<mxfile host="app.diagrams.net"><diagram id="p2" name="Séquence dépôt">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" page="1" pageWidth="1100" pageHeight="820">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="lU" value="Utilisateur" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;size=40;fillColor=#f5f5f5;" vertex="1" parent="1">
+          <mxGeometry x="30" y="40" width="140" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="lW" value="web :8080" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;size=40;fillColor=#dae8fc;" vertex="1" parent="1">
+          <mxGeometry x="230" y="40" width="140" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="lA" value="api :8000" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;size=40;fillColor=#dae8fc;" vertex="1" parent="1">
+          <mxGeometry x="450" y="40" width="140" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="lD" value="db :5432" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;size=40;fillColor=#d5e8d4;" vertex="1" parent="1">
+          <mxGeometry x="670" y="40" width="140" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="lK" value="worker" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;size=40;fillColor=#fff2cc;" vertex="1" parent="1">
+          <mxGeometry x="870" y="40" width="140" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="loop" value="loop : toutes les 2 s (essais bornés)" style="shape=umlFrame;whiteSpace=wrap;html=1;width=230;height=24;fontSize=11;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="280" y="315" width="260" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="frK" value="worker : hors requête HTTP" style="shape=umlFrame;whiteSpace=wrap;html=1;width=180;height=24;fontSize=11;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="720" y="410" width="250" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="Contrôles : 413 trop gros, 415 pas CSV, 422 vide" style="shape=note;whiteSpace=wrap;html=1;size=10;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="530" y="160" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" value="Choisit le CSV, clique Déposer" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="100" y="110" as="sourcePoint" /><mxPoint x="300" y="110" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="POST /api/datasets/{id}/ingestions (text/csv)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="150" as="sourcePoint" /><mxPoint x="520" y="150" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="INSERT ingestion (pending)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="520" y="220" as="sourcePoint" /><mxPoint x="740" y="220" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m4" value="202 Accepted {status: pending}" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="520" y="255" as="sourcePoint" /><mxPoint x="300" y="255" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m5" value="Dépôt reçu, en attente…" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="290" as="sourcePoint" /><mxPoint x="100" y="290" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m6" value="GET /api/ingestions/{id}" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="350" as="sourcePoint" /><mxPoint x="520" y="350" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m7" value="200 {status: pending}" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="520" y="385" as="sourcePoint" /><mxPoint x="300" y="385" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m8" value="SELECT pending FOR UPDATE SKIP LOCKED" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="940" y="450" as="sourcePoint" /><mxPoint x="740" y="450" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m9" value="UPDATE status = running" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="940" y="485" as="sourcePoint" /><mxPoint x="740" y="485" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m10" value="INSERT mesures ON CONFLICT DO NOTHING" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="940" y="520" as="sourcePoint" /><mxPoint x="740" y="520" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m11" value="succeeded + compteurs&lt;br&gt;(ou failed + ROLLBACK si en-tête invalide)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="940" y="555" as="sourcePoint" /><mxPoint x="740" y="555" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m12" value="GET /api/ingestions/{id}" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="610" as="sourcePoint" /><mxPoint x="520" y="610" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m13" value="200 {succeeded, 4 / 7 / 1}" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="520" y="650" as="sourcePoint" /><mxPoint x="300" y="650" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m14" value="Affiche rapport et indicateurs" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="690" as="sourcePoint" /><mxPoint x="100" y="690" as="targetPoint" /></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  </mxfile>
