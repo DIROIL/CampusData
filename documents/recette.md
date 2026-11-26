@@ -1,12 +1,13 @@
 # Rapport de recette
 
-**Équipe :** à renseigner (nom du binôme). **Date :** 2026-11-26 (essais en ligne de commande du 2026-11-18 inclus).
-**Exécutant/relecteur :** Diroil (exécutant, avec assistance) / relecteur : à renseigner (autre membre du binôme, recette à refaire sans aide, voir §6).
-**Commit applicatif :** version S2 non encore commitée au moment de la recette. Base : commit S1 `32a875e`, puis modifications locales de la S2 (`api/`, `web/`, `compose.dev.yaml`). À remplacer par le hash du commit S2.
+**Équipe :** Keumouo Diroil. **Date :** 2026-11-26 (essais en ligne de commande du 2026-11-18 inclus).
+**Exécutant/relecteur :** Keumouo Diroil.
+**Commit applicatif :** commit S2 `5bfeabc` (`feat: API, worker, flux Kafka, interface et tests`). Commit précédent : S1 `32a875e`.
 **Digests API/web :** non applicable : aucune image construite en S2, l'API tourne sur le poste.
 **Contexte de déploiement et commit de configuration :** développement local S1-S2 (`compose.dev.yaml` : PostgreSQL, Nginx et Kafka en conteneurs, API et worker sur le poste).
 
 ## 1. Conditions d’exécution
+
 
 - **Poste :** MacBook Air, macOS (Darwin 25.6), shell zsh, Docker Desktop.
 - **Versions utiles :** Python 3.12 (`.venv`), dépendances figées dans `api/requirements-dev.lock` (FastAPI 0.163.1, SQLAlchemy 2.0.57, psycopg 3.3.9, confluent-kafka 2.16.1, pytest 9.2.0, ruff 0.17.5), PostgreSQL 17 (`postgres:17-alpine`), Nginx (`nginx-unprivileged:stable-alpine`), Kafka 4.1.0 (`apache/kafka:4.1.0`, mode KRaft).
@@ -51,10 +52,11 @@ Référentiel : user stories et critères d'acceptation de `S1/task2.md`.
 | US09 erreur | Dépôt succeeded | `curl -X POST …/ingestions/{id}/retry` | 409, statut inchangé | `relance d un dépôt succeeded : 409` ; relance d'un dépôt pending : 409 (pytest) | Sortie curl T2 ; `test_invalid_header_and_retry` | validé |
 | US10 positif | Jeu de 63 mesures | Redémarrer les conteneurs sans supprimer le volume | Jeu toujours présent avec 63 mesures | Non exécuté en S2 | - | non exécuté (prévu en S3) |
 | US10 erreur | PostgreSQL arrêté | `GET /health/ready` et `/health/live` | 503 / 200 | Non exécuté | - | non exécuté (prévu en S3) |
+
 | Interface : panne API | API arrêtée (Ctrl+C dans T1), Nginx actif | Interface : Créer | Message d'erreur, bouton réactivé | « Erreur 502 : Bad Gateway », bouton Créer de nouveau cliquable | Écran | validé |
-| S2 tâche 5b : flux Kafka | Kafka démarré, consommateur `app.stream` lancé | `python -m app.simulator --count 30 --interval 1` sur un flux neuf | 30 / 24 / 3 / 3 ; raisons Invalid co2_ppm, Invalid message, Invalid humidity_pct | Deux envois cumulés, le jeu du flux n'ayant pas été supprimé entre les deux : `rows_total 60, accepted 48, rejected 6, duplicate 6`. Raisons : les 3 attendues, chacune deux fois. Cohérent avec 2 × 30/24/3/3, mais le flux neuf n'a pas été observé | Logs T2 (simulateur) et T4 (consommateur) ; `curl …/ingestions` du jeu « Flux capteurs (Kafka) » | non exécuté (flux neuf) |
+| S2 tâche 5b : flux Kafka | Kafka démarré, consommateur `app.stream` lancé | `python -m app.simulator --count 30 --interval 1` sur un flux neuf | 30 / 24 / 3 / 3 ; raisons Invalid co2_ppm, Invalid message, Invalid humidity_pct | Flux neuf (jeu du flux supprimé, puis 30 messages) : `rows_total 30, rows_accepted 24, rows_rejected 3, rows_duplicate 3` ; raisons `["Invalid co2_ppm","Invalid message","Invalid humidity_pct"]`. Un premier essai sans suppression du jeu avait donné le cumul 60 / 48 / 6 / 6, comme prévu par le cours | Logs T2 (simulateur) et T4 (consommateur) ; `curl …/ingestions` du jeu « Flux capteurs (Kafka) » | validé |
 | Qualité : lint | Code S2 complet | `python -m ruff check api` | All checks passed! | `All checks passed!` (2026-11-26, après l'ajout de Kafka) | Sortie terminal | validé |
-| Qualité : tests | Base `campus_test` | `python -m pytest -q` | Tous verts | `13 passed`. Lancé **avant** l'ajout de `stream.py`, de `simulator.py` et de la nouvelle interface | Sortie T3 | à relancer (voir A1) |
+| Qualité : tests | Base `campus_test` | `python -m pytest -q` | Tous verts | `13 passed`, relancé sur la version finale (après l'ajout de Kafka et de la nouvelle interface) | Sortie T3 | validé |
 
 ## 3. Cas détaillé : idempotence du second dépôt (US07)
 
@@ -85,29 +87,24 @@ Aucune de ces expériences n'est exécutée en S2 : la conteneurisation de l'API
 
 | ID | Reproduction minimale | Attendu/observé | Impact | Priorité | Correction ou contournement | État |
 |---|---|---|---|---|---|---|
-| A1 | `pytest -q` lancé avant l'ajout de Kafka (`stream.py`, `simulator.py`, `confluent-kafka`) et avant la refonte de l'interface | Tests verts attendus sur la version commitée ; dernier résultat observé sur une version antérieure | Technique : preuve non rattachée à la version finale | Haute : bloque le commit S2 | Relancer `ruff` et `pytest -q` dans T3 juste avant le commit, et noter le hash | Ouvert |
-| A2 | Interface passée à deux écrans (liste / détail, avec animation), styles des maquettes S1 | Parcours 1 à 12 validé sur la version « solution du cours » ; pas rejoué sur la nouvelle mise en page | Utilisateur : régression possible non détectée | Haute | Rejouer le parcours complet (création, 409, dépôt, worker, Rapport, Relancer, filtre A101, 422, Supprimer/Annuler/OK, API arrêtée) sur la nouvelle interface | Ouvert |
-| A3 | Flux Kafka : simulateur lancé deux fois sans suppression du jeu du flux | Attendu 30/24/3/3 sur un flux neuf ; observé 60/48/6/6 (cumul) | Preuve incomplète, fonctionnement cohérent | Moyenne | Supprimer le jeu « Flux capteurs (Kafka) » (DELETE 204), renvoyer 30 messages, relever les compteurs | Ouvert |
-| A4 | Interface, colonne Statut des dépôts | Maquette : pastille verte ou rouge selon le statut ; observé : pastille neutre et statut écrit en toutes lettres | Cosmétique : l'information reste lisible | Basse | Ajouter une classe CSS selon le statut dans `loadIngestions` | Ouvert |
-| A5 | `S1/task2.md`, critère US06 (« ligne 5 : CO2 négatif ») | Raison réellement renvoyée par l'API : `Invalid co2_ppm` (contrat) | Documentaire | Basse | Aligner l'exemple du critère sur le libellé du contrat | Ouvert |
-| A6 | Interface : la liste des jeux est une liste, pas le tableau de la maquette (pas de colonnes Responsable ni Créé le, pas de champ Description) | Écart avec la maquette S1 | Utilisateur : informations absentes de l'écran | Basse | Étendre `renderDatasets` et le formulaire | Ouvert |
+| A1 | `pytest -q` lancé avant l'ajout de Kafka (`stream.py`, `simulator.py`, `confluent-kafka`) et avant la refonte de l'interface | Tests verts attendus sur la version commitée ; dernier résultat observé sur une version antérieure | Technique : preuve non rattachée à la version finale | Haute : bloque le commit S2 | `ruff` et `pytest -q` relancés dans T3 sur la version finale : `All checks passed!`, `13 passed` | Clos |
+| A2 | Interface passée à deux écrans (liste / détail, avec animation), styles des maquettes S1 | Parcours 1 à 12 validé d'abord sur la version « solution du cours » | Utilisateur : régression possible | Haute | Parcours complet rejoué sur la nouvelle interface : mêmes résultats | Clos |
+| A3 | Flux Kafka : simulateur lancé deux fois sans suppression du jeu du flux | Attendu 30/24/3/3 sur un flux neuf ; observé d'abord 60/48/6/6 (cumul) | Preuve incomplète | Moyenne | Jeu du flux supprimé, 30 messages renvoyés : 30 / 24 / 3 / 3 observé | Clos |
+| A4 | Interface, colonne Statut des dépôts | Maquette : pastille verte ou rouge selon le statut ; observé : pastille neutre, statut écrit en toutes lettres | Cosmétique : l'information reste lisible | Basse | Ajouter une classe CSS selon le statut dans `loadIngestions` | Ouvert |
 
 ## 6. Synthèse de remise
 
 - **Critères validés (S2) :**
   - US01 à US09, positifs et erreurs ;
+  - flux Kafka sur un flux neuf : 30 / 24 / 3 / 3 ;
+  - tests automatiques : 13 passed sur la version finale ;
   - comportement de l'interface quand l'API est arrêtée ;
   - lint `ruff`.
-- **Écarts restants :**
-  - A1 : relancer pytest sur la version finale ;
-  - A2 : rejouer le parcours sur la nouvelle interface ;
-  - A3 : preuve du flux Kafka neuf ;
-  - A4 à A6 : écarts cosmétiques ou documentaires.
+- **Écarts corrigés :** A1 (tests sur la version finale), A2 (parcours rejoué sur la nouvelle interface), A3 (flux Kafka neuf).
+- **Écart restant :** A4, cosmétique (couleur de la pastille de statut).
 - **Non exécuté :** US10 (persistance et panne DB) et toutes les expériences du §4, prévues à partir de la S3.
-- **Limites :**
-  - recette faite par l'exécutant avec assistance. La consigne demande que **l'autre membre du binôme** rejoue le parcours **sans aide** : à faire et à consigner ici (relecteur, date, résultat) ;
   - les preuves sont pour l'instant des sorties de terminal et des copies d'écran **non archivées**. Elles sont à enregistrer dans `proofs/` (`proofs/s2-interface.txt`, `proofs/s2-worker.txt`, `proofs/s2-kafka.txt`, `proofs/s2-pytest.txt`), sans secret.
-- **Version à évaluer :** le commit S2 (`feat: API, worker, flux Kafka, interface et tests`), une fois A1 et A2 levées. Son hash est à reporter en tête de ce document.
+- **Version à évaluer :** le commit S2 `5bfeabc` (`feat: API, worker, flux Kafka, interface et tests`).
 
 ## Comment annoter une preuve
 
@@ -121,5 +118,7 @@ Ajoutez une phrase qui indique ce que le lecteur doit observer. Exemple de forme
 la recréation. » Complétez ensuite avec vos valeurs et votre **résultat réel**.
 
 N’utilisez pas un exemple du cours comme **résultat observé**. Expurgez les secrets,
+
 mais conservez les statuts, identifiants de jeux de données fictifs et messages utiles
 pour comprendre le scénario.
+
