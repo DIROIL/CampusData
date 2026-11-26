@@ -10,6 +10,8 @@ anyio==4.16.0
     #   starlette
 click==8.5.1
     # via uvicorn
+confluent-kafka==2.16.1
+    # via -r api/requirements.in
 fastapi==0.163.1
     # via -r api/requirements.in
 greenlet==3.5.6

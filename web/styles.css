@@ -1,18 +1,209 @@
 /* CONTEXTE ÉTUDIANT : S2, styles de votre interface.
    À ADAPTER : mise en page et états visuels sans supprimer les libellés/focus.
-   CONTRÔLE : petit écran, clavier et messages lisibles en cas d’erreur. */
-/* Socle de lisibilité ; compléter la mise en page pendant la séance 2.
-   Utiliser des classes pour les états chargement/erreur/vide ; la couleur
-   seule ne doit pas porter une information de statut. Ajouter du texte. */
-:root { font-family: system-ui, sans-serif; color-scheme: light dark; }
-body { margin: 0; line-height: 1.5; }
-/* Une largeur limitée rend les formulaires lisibles sur grand écran.
-   Le padding conserve une marge sur mobile sans largeur fixe débordante. */
-main { max-width: 64rem; margin: 2rem auto; padding: 0 1rem; }
-/* Les contrôles natifs héritent de la police pour une taille cohérente. */
+   CONTRÔLE : petit écran, clavier et messages lisibles en cas d'erreur. */
+/* Mise en page inspirée des maquettes S1 (S1/maquette/) : bandeau sombre,
+   cartes blanches sur fond gris clair, boutons principaux verts.
+   Responsive : grilles qui passent sur une colonne et tableaux qui défilent
+   horizontalement sur petit écran. Aucune information ne repose sur la seule
+   couleur : le statut reste écrit en toutes lettres. */
+
+/* ---- Couleurs réutilisées partout ---- */
+:root {
+  --bg: #f5f6f9;
+  --card: #ffffff;
+  --text: #1f2d36;
+  --muted: #5f6b76;
+  --border: #e2e6ec;
+  --head: #172a35;          /* bandeau du haut */
+  --primary: #357a6f;       /* boutons principaux, liens */
+  --primary-dark: #2b6359;
+  --primary-soft: #eaf4f1;
+  --danger: #b03a35;
+  --radius: 12px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+  color: var(--text);
+}
+
+/* ---- Socle ---- */
+* { box-sizing: border-box; }
+body { margin: 0; line-height: 1.5; background: var(--bg); }
 input, textarea, select, button { font: inherit; }
 button { cursor: pointer; }
 /* Le curseur ne remplace pas l'attribut disabled géré dans le JavaScript. */
-button:disabled { cursor: wait; }
-/* Garder un focus visible et vérifier le contraste en modes clair et sombre. */
-:focus-visible { outline: 3px solid #5684ff; outline-offset: 3px; }
+button:disabled { cursor: wait; opacity: .6; }
+/* Focus toujours visible pour la navigation au clavier. */
+:focus-visible { outline: 3px solid #5684ff; outline-offset: 2px; }
+/* L'attribut hidden doit toujours gagner (le détail est caché tant qu'aucun jeu n'est ouvert). */
+[hidden] { display: none !important; }
+/* Texte lu par les lecteurs d'écran mais invisible à l'écran (légendes de tableaux, libellés). */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ---- Bandeau du haut ---- */
+.topbar { background: var(--head); color: #fff; }
+.topbar-inner {
+  max-width: 72rem; margin: 0 auto; padding: .9rem 1rem;
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1.5rem;
+}
+.brand { margin: 0; font-size: 1.5rem; font-weight: 700; }
+.brand-sub {
+  margin-left: 1.25rem; font-size: .8rem; font-weight: 400;
+  text-transform: uppercase; letter-spacing: .03em; opacity: .85;
+}
+.topbar-version { margin: 0; font-size: .9rem; opacity: .85; }
+
+/* ---- Contenu ---- */
+main { max-width: 72rem; margin: 0 auto; padding: 2rem 1rem; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: .25rem 0; }
+h2, h3 { margin: 0 0 .5rem; }
+.eyebrow {
+  margin: 0; color: var(--primary); font-size: .8rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .03em;
+}
+.lead { margin: 0 0 1.5rem; color: var(--muted); }
+.hint { margin: .25rem 0; color: var(--muted); font-size: .9rem; }
+
+/* Carte blanche arrondie, utilisée pour chaque bloc. */
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.5rem; margin-bottom: 1.5rem;
+}
+/* En-tête de carte : titre à gauche, actions à droite, qui passent dessous si la place manque. */
+.card-head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem;
+}
+.card-head h3 { margin: 0; }
+
+/* Message global (succès ou erreur) : masqué quand il est vide. */
+#message:empty { display: none; }
+#message {
+  margin: 0 0 1.5rem; padding: .75rem 1rem; border-radius: 8px;
+  background: var(--primary-soft); border-left: 4px solid var(--primary); font-weight: 500;
+}
+
+/* ---- Formulaires ---- */
+.field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.field label { font-weight: 500; }
+input:not([type="file"]) {
+  width: 100%; padding: .6rem .8rem; border: 1px solid #cfd5dd; border-radius: 8px; background: #fff;
+}
+/* Formulaire de création : champs côte à côte sur grand écran, empilés sur mobile. */
+.fields {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem 1.5rem; margin: 1rem 0 1.25rem;
+}
+/* Filtres des indicateurs : même principe, le bouton reste aligné en bas. */
+.filters {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1rem; align-items: end; margin: 1rem 0;
+}
+
+/* ---- Boutons ---- */
+button {
+  padding: .55rem 1.1rem; border: 1px solid #cfd5dd; border-radius: 8px;
+  background: #fff; color: var(--text); font-weight: 600;
+}
+button:hover:not(:disabled) { background: #f0f2f5; }
+button.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+button.primary:hover:not(:disabled) { background: var(--primary-dark); }
+
+/* ---- Dépôt de fichier ---- */
+.upload { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.upload input[type="file"] { max-width: 100%; }
+.status-line:empty { display: none; }
+.status-line { margin: .5rem 0 0; color: var(--primary); font-weight: 600; }
+
+/* ---- Liste des jeux de données ---- */
+.dataset-list { list-style: none; margin: .5rem 0 0; padding: 0; }
+.dataset-list li {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem;
+  padding: .85rem 0; border-top: 1px solid var(--border);
+}
+/* 1er bouton = ouvrir le jeu : affiché comme un lien (nom + nombre de mesures). */
+.dataset-list li button:first-child {
+  border: none; background: none; padding: 0; text-align: left;
+  color: var(--text); font-weight: 600;
+}
+.dataset-list li button:first-child:hover { color: var(--primary); text-decoration: underline; background: none; }
+/* Dernier bouton = Supprimer : texte rouge (le mot « Supprimer » porte le sens). */
+.dataset-list li button:last-child:not(:first-child) { color: var(--danger); }
+
+/* ---- Détail d'un jeu ---- */
+/* Bouton « ← Tous les jeux de données » affiché comme un lien. */
+button.back {
+  border: none; background: none; padding: 0; margin-bottom: .5rem;
+  color: var(--primary); font-weight: 500;
+}
+button.back:hover { background: none; text-decoration: underline; }
+.detail-title { font-size: clamp(1.5rem, 3.5vw, 2.2rem); margin-bottom: 1.25rem; }
+
+/* ---- Tableaux ---- */
+/* Sur petit écran, le tableau défile dans sa carte au lieu d'élargir la page. */
+.table-wrap { overflow-x: auto; margin: .75rem -1.5rem 0; }
+table { border-collapse: collapse; width: 100%; min-width: 40rem; }
+th, td { padding: .75rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border); }
+thead th { background: var(--bg); color: var(--muted); font-weight: 600; font-size: .9rem; }
+td { font-variant-numeric: tabular-nums; }
+td button { padding: .4rem .9rem; }
+td button + button { margin-left: .35rem; }
+/* Colonne « Statut » des dépôts : pastille, le texte (succeeded, failed…) reste lisible. */
+#ingestions td:nth-child(2):not(:only-child) {
+  font-size: .9rem;
+}
+#ingestions td:nth-child(2):not(:only-child)::before {
+  content: "●"; margin-right: .4rem; color: var(--muted);
+}
+/* Première colonne des indicateurs (la salle) en vert, comme la maquette. */
+#stats td:first-child:not(:only-child) { color: var(--primary); font-weight: 600; }
+/* Ligne d'état vide (« Aucun dépôt… », « Aucune mesure… ») : texte discret. */
+td:only-child { color: var(--muted); font-style: italic; }
+
+/* ---- Rapport de rejets ---- */
+.report:empty { display: none; }
+.report {
+  margin-top: 1rem; padding: 1rem 1.25rem; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+}
+.report h4 { margin: 0 0 .5rem; }
+.report ul { margin: 0; padding-left: 1.25rem; }
+
+/* ---- Pied de page ---- */
+.footer {
+  max-width: 72rem; margin: 0 auto; padding: 0 1rem 2rem;
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem;
+  color: var(--muted); font-size: .9rem;
+}
+.footer p { margin: 0; }
+
+/* ---- Transition entre les deux écrans ---- */
+/* Quand un écran passe de hidden à visible, le navigateur rejoue son animation :
+   le détail arrive depuis la droite (on « avance »), la liste depuis la gauche (on « revient »). */
+#dataset-detail { animation: from-right .3s ease-out; }
+#list-view { animation: from-left .3s ease-out; }
+@keyframes from-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes from-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: none; }
+}
+/* Accessibilité : si l'utilisateur a demandé à réduire les animations dans son
+   système, on garde un simple fondu, sans mouvement. */
+@media (prefers-reduced-motion: reduce) {
+  #dataset-detail, #list-view { animation: fade .2s ease-out; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+}
+
+/* ---- Petit écran (téléphone) ---- */
+@media (max-width: 40rem) {
+  .card { padding: 1rem; }
+  .table-wrap { margin-inline: -1rem; }
+  th, td { padding: .6rem 1rem; }
+  .brand-sub { display: block; margin-left: 0; }
+  /* Boutons pleine largeur : plus faciles à toucher. */
+  .upload, .upload button, #dataset-form > button.primary, .filters button { width: 100%; }
+}
